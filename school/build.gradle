@@ -1,0 +1,180 @@
+import org.gradle.api.services.BuildService
+import org.gradle.api.services.BuildServiceParameters
+import org.testcontainers.containers.PostgreSQLContainer
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "org.testcontainers:postgresql:$testcontainersPostgresVersion"
+        classpath "org.flywaydb:flyway-database-postgresql:$flywayVersion"
+    }
+}
+
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version "2.0.21"
+    id 'org.jetbrains.kotlin.plugin.allopen' version "2.0.21"
+    id 'io.quarkus'
+    id 'org.jooq.jooq-codegen-gradle' version "3.19.15"
+    id 'org.flywaydb.flyway' version "$flywayVersion"
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+    implementation 'io.quarkus:quarkus-rest'
+    implementation 'io.quarkus:quarkus-flyway'
+    implementation 'io.quarkus:quarkus-smallrye-openapi'
+    implementation 'io.quarkus:quarkus-rest-jackson'
+    implementation 'io.quarkus:quarkus-kotlin'
+    implementation 'io.quarkus:quarkus-agroal'
+    implementation 'io.quarkus:quarkus-jdbc-postgresql'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+    implementation 'io.quarkus:quarkus-arc'
+    implementation 'io.quarkus:quarkus-container-image-jib'
+    implementation 'io.quarkus:quarkus-info'
+    implementation 'io.quarkus:quarkus-smallrye-health'
+    implementation 'io.quarkus:quarkus-micrometer'
+    implementation 'io.smallrye.stork:stork-service-discovery-consul'
+    implementation 'io.smallrye.reactive:smallrye-mutiny-vertx-consul-client'
+
+    implementation "org.flywaydb:flyway-database-postgresql:$flywayVersion"
+    implementation "org.jooq:jooq:$jooqVersion"
+    implementation 'io.quarkiverse.resteasy-problem:quarkus-resteasy-problem:3.14.0'
+
+    jooqCodegen "org.postgresql:postgresql:$pgsqlJdbcVersion"
+    jooqCodegen "org.slf4j:slf4j-simple:2.0.16"
+
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'io.rest-assured:rest-assured'
+}
+
+group 'fr.livio'
+version providers.environmentVariable("PROJECT_VERSION").orElse(projectVersion).get()
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+test {
+    systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+}
+allOpen {
+    annotation("jakarta.ws.rs.Path")
+    annotation("jakarta.enterprise.context.ApplicationScoped")
+    annotation("jakarta.persistence.Entity")
+    annotation("io.quarkus.test.junit.QuarkusTest")
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_21
+    kotlinOptions.javaParameters = true
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_21
+}
+
+Provider<PostgresService> dbContainerProvider = project.getGradle()
+        .getSharedServices()
+        .registerIfAbsent("postgres", PostgresService.class, {})
+
+
+flywayMigrate {
+    usesService dbContainerProvider
+    locations = ["filesystem:src/main/resources/db/migration"]
+    inputs.files(fileTree("src/main/resources/db/migration"))
+
+    doFirst {
+        def dbContainer = dbContainerProvider.get().container
+        url = dbContainer.jdbcUrl
+        user = dbContainer.username
+        password = dbContainer.password
+    }
+
+}
+
+afterEvaluate {
+    jooqCodegen.dependsOn flywayMigrate
+    jooqCodegen {
+        doFirst {
+            def dbContainer = dbContainerProvider.get().container
+            jooq {
+                configuration {
+                    jdbc {
+                        driver = "org.postgresql.Driver"
+                        url = dbContainer.jdbcUrl
+                        user = dbContainer.username
+                        password = dbContainer.password
+                    }
+                }
+            }
+        }
+    }
+}
+
+jooq {
+    configuration {
+        logging = org.jooq.meta.jaxb.Logging.WARN
+
+        generator {
+            name = "org.jooq.codegen.KotlinGenerator"
+            database {
+                name = "org.jooq.meta.postgres.PostgresDatabase"
+                includes = ".*"
+                excludes = 'flyway_schema_history'
+                inputSchema = 'public'
+            }
+            generate {
+                daos = true
+                comments = false
+                implicitJoinPathsAsKotlinProperties = true
+                kotlinSetterJvmNameAnnotationsOnIsPrefix = true
+                pojosAsKotlinDataClasses = true
+                kotlinNotNullPojoAttributes = true
+                kotlinNotNullRecordAttributes = true
+                kotlinNotNullInterfaceAttributes = true
+                kotlinDefaultedNullablePojoAttributes = false
+                kotlinDefaultedNullableRecordAttributes = false
+            }
+            target {
+                packageName = 'fr.livio.jooq'
+                directory = 'build/generated-src/jooq'
+            }
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/jooq'
+        }
+    }
+}
+
+abstract class PostgresService implements BuildService<BuildServiceParameters.None>, AutoCloseable {
+    private final PostgreSQLContainer container;
+
+    PostgresService() {
+        container = new PostgreSQLContainer("postgres:17")
+
+        container.start()
+    }
+
+    @Override
+    void close() {
+        container.stop()
+    }
+
+    PostgreSQLContainer getContainer() {
+        return container
+    }
+}
