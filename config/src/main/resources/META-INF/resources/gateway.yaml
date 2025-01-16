@@ -1,0 +1,7 @@
+gatewayRoutes:
+    - serviceOut: school
+      pathIn: /school
+      pathOut: /school
+    - serviceOut: student
+      pathIn: /student
+      pathOut: /student

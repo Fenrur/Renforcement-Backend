@@ -21,8 +21,6 @@ dependencies {
     implementation 'io.quarkus:quarkus-info'
     implementation 'io.quarkus:quarkus-smallrye-health'
     implementation 'io.quarkus:quarkus-micrometer'
-    implementation 'io.quarkus:quarkus-keycloak-authorization'
-    implementation 'io.quarkus:quarkus-oidc'
     implementation "io.quarkiverse.resteasy-problem:quarkus-resteasy-problem:3.15.0"
     implementation 'io.smallrye.reactive:smallrye-mutiny-vertx-consul-client'
     implementation 'io.smallrye.reactive:smallrye-mutiny-vertx-web-client'

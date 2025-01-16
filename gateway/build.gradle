@@ -21,6 +21,7 @@ dependencies {
     implementation 'io.quarkus:quarkus-arc'
     implementation 'io.smallrye.reactive:smallrye-mutiny-vertx-consul-client'
     implementation 'io.smallrye.reactive:smallrye-mutiny-vertx-web-client'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
     testImplementation 'io.quarkus:quarkus-junit5'
 }
 
