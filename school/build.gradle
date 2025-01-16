@@ -46,7 +46,7 @@ dependencies {
 
     implementation "org.flywaydb:flyway-database-postgresql:$flywayVersion"
     implementation "org.jooq:jooq:$jooqVersion"
-    implementation 'io.quarkiverse.resteasy-problem:quarkus-resteasy-problem:3.14.0'
+    implementation 'io.quarkiverse.resteasy-problem:quarkus-resteasy-problem:3.15.0'
 
     jooqCodegen "org.postgresql:postgresql:$pgsqlJdbcVersion"
     jooqCodegen "org.slf4j:slf4j-simple:2.0.16"

@@ -4,6 +4,7 @@ import fr.livio.School
 import fr.livio.jooq.tables.daos.SchoolsDao
 import fr.livio.jooq.tables.pojos.Schools
 import fr.livio.jooq.tables.references.SCHOOLS
+import io.quarkus.logging.Log
 import jakarta.enterprise.context.ApplicationScoped
 import org.jooq.Configuration
 import org.jooq.DSLContext
