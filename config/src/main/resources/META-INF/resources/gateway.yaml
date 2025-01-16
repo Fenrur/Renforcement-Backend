@@ -1,7 +1,50 @@
 gatewayRoutes:
     - serviceOut: school
+      pathIn: /school/:id
+      pathOut: /school/:id
+      method: GET
+      
+    - serviceOut: school
+      pathIn: /school/:id
+      pathOut: /school/:id
+      method: PUT
+    
+    - serviceOut: school
+      pathIn: /school/:id
+      pathOut: /school/:id
+      method: DELETE
+    
+    - serviceOut: school
       pathIn: /school
       pathOut: /school
+      method: POST
+    
+    - serviceOut: student
+      pathIn: /student/:id
+      pathOut: /student/:id
+      method: GET
+    
+    - serviceOut: student
+      pathIn: /student/:id
+      pathOut: /student/:id
+      method: PUT
+      
+    - serviceOut: student
+      pathIn: /student/:id
+      pathOut: /student/:id
+      method: DELETE
+      
     - serviceOut: student
       pathIn: /student
       pathOut: /student
+      method: POST
+    
+    - serviceOut: config
+      pathIn: /config/gateway
+      pathOut: /gateway.yaml
+      method: GET
+      
+    - serviceOut: config
+      pathIn: /happy-birthday
+      pathOut: /waw.png
+      method: GET

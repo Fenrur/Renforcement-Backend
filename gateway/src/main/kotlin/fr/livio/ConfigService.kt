@@ -2,6 +2,7 @@ package fr.livio
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import io.quarkus.logging.Log
 import io.smallrye.mutiny.Uni
 import io.vertx.mutiny.ext.consul.ConsulClient
 import io.vertx.mutiny.ext.web.client.WebClient

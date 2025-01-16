@@ -25,7 +25,7 @@ class StudentResource(private val studentService: StudentService) {
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    fun get(id: String): GetStudentResponseBody = studentService
+    fun get(@PathParam("id") id: String): GetStudentResponseBody = studentService
         .get(id)
         .let { GetStudentResponseBody(it.student, it.school) }
     

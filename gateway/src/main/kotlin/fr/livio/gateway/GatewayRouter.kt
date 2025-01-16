@@ -3,15 +3,12 @@ package fr.livio.gateway
 import io.quarkus.logging.Log
 import io.smallrye.mutiny.Uni
 import io.vertx.core.http.HttpMethod
-import io.vertx.mutiny.core.buffer.Buffer
 import io.vertx.mutiny.ext.consul.ConsulClient
 import io.vertx.mutiny.ext.web.Router
 import io.vertx.mutiny.ext.web.RoutingContext
 import io.vertx.mutiny.ext.web.client.WebClient
-import io.vertx.mutiny.ext.web.client.HttpResponse
 import io.vertx.mutiny.ext.web.handler.BodyHandler
 import jakarta.enterprise.context.ApplicationScoped
-import java.util.function.Consumer
 
 @ApplicationScoped
 class GatewayRouter(
@@ -40,7 +37,8 @@ class GatewayRouter(
         pathOut: String,
     ) {
         router.route(method, pathIn).handler(BodyHandler.create())
-        router.route(method, pathIn).handler(GatewayRouteHandler(serviceOut, pathIn, pathOut))
+        router.route(method, pathIn).handler(GatewayRouteHandler(serviceOut, pathOut))
+        Log.info("Route registered: $method '$pathIn' -> '/$serviceOut$pathOut' | service '$serviceOut'")
     }
 
     fun registerRoute(
@@ -49,24 +47,28 @@ class GatewayRouter(
         pathOut: String
     ) {
         router.route(pathIn).handler(BodyHandler.create())
-        router.route(pathIn).handler(GatewayRouteHandler(serviceOut, pathIn, pathOut))
+        router.route(pathIn).handler(GatewayRouteHandler(serviceOut, pathOut))
+        Log.info("Route registered: '$pathIn' -> '/$serviceOut$pathOut' | service '$serviceOut'")
+    }
+
+    fun clear() {
+        router.clear()
     }
 
     inner class GatewayRouteHandler(
         private val serviceOut: String,
-        private val pathIn: String,
         private val pathOut: String,
     ) : (RoutingContext) -> Unit {
         override fun invoke(ctx: RoutingContext) {
             randomServiceUrl(serviceOut)
                 .onItem().transformToUni { serviceUrl ->
-                    var finalOutUrl = serviceUrl + ctx.request().path().replace(pathIn, pathOut)
+                    var finalOutUrl = serviceUrl + pathOut
 
                     ctx.pathParams().forEach {
                         finalOutUrl = finalOutUrl.replace(":${it.key}", it.value)
                     }
-
-                    Log.info("Forwarding to: $finalOutUrl")
+                    
+                    Log.info("Forwarding from ${ctx.request().path()} -> $finalOutUrl")
 
                     val clientRequest = webClient.requestAbs(ctx.request().method(), finalOutUrl)
 

@@ -24,9 +24,11 @@ class SchoolResource(private val schoolService: SchoolService) {
     }
     
     @GET
+    @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ResponseStatus(RestResponse.StatusCode.OK)
-    fun get(@QueryParam("id") id: Int): School = schoolService.get(id) ?: throw NotFoundException("School not found")
+    fun get(@PathParam("id") id: Int): School {
+        return schoolService.get(id) ?: throw NotFoundException("School not found")
+    }
     
     data class UpdateSchoolRequestBody(val name: String, val address: String, val directorName: String)
     

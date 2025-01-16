@@ -1,5 +1,6 @@
-package fr.livio
+package fr.livio.school
 
+import fr.livio.School
 import jakarta.ws.rs.GET
 import jakarta.ws.rs.Path
 import jakarta.ws.rs.PathParam
